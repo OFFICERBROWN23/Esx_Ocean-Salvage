@@ -1,6 +1,6 @@
 Config                            = {}
 Config.DrawDistance               = 100.0
-Config.nameJob                    = "salvage"
+Config.nameJob                    = "Salvage"
 Config.nameJobLabel               = "Diver"
 Config.platePrefix                = "OCEANMAN"
 Config.Locale                     = 'fr'
@@ -63,13 +63,13 @@ Config.Zones = {
 	ItemTime = 500,
 	ItemDb_name = "contrat",
 	ItemName = "Facture",
-	ItemMax = 15,
+	ItemMax = 25,
 	ItemAdd = 5,
 	ItemRemove = 1,
 	ItemRequires = "contrat",
 	ItemRequires_name = "Facture",
 	ItemDrop = 100,
-	ItemPrice  = 1900,
+	ItemPrice  = 800,
 	hint = 'Press ~INPUT_CONTEXT~ to turn in your salvage collected',
   },
 
@@ -130,21 +130,23 @@ Config.Uniforms = {
         ['tshirt_1'] = 15, ['tshirt_2'] = 0,
 		['torso_1'] = 243, ['torso_2'] = 5,
 		['decals_1'] = 0, ['decals_2'] = 0,
-		['arms'] = 8,
+		['arms'] = 8,     
 		['pants_1'] = 94, ['pants_2'] = 0,
 		['shoes_1'] = 67, ['shoes_2'] = 0,
-		['helmet_1'] = 1, ['helmet_2'] = 0,
+		['glasses_1'] = 26, ['glasses_2'] = 0,
+		['helmet_1'] = -1, ['helmet_2'] = 0,
 		['chain_1'] = 0, ['chain_2'] = 0,
 		['ears_1'] = -1, ['ears_2'] = 0
     },
     female = {
-        ['tshirt_1'] = 15, ['tshirt_2'] = 0,
-		['torso_1'] = 243, ['torso_2'] = 5,
+        ['tshirt_1'] = 1, ['tshirt_2'] = 0,
+		['torso_1'] = 251, ['torso_2'] = 5,
 		['decals_1'] = 0, ['decals_2'] = 0,
-		['arms'] = 8,
-		['pants_1'] = 94, ['pants_2'] = 0,
-		['shoes_1'] = 67, ['shoes_2'] = 0,
-		['helmet_1'] = 0, ['helmet_2'] = 3,
+		['arms'] = 6,
+		['pants_1'] = 97, ['pants_2'] = 5,
+		['shoes_1'] = 70, ['shoes_2'] = 0,
+		['glasses_1'] = 28, ['glasses_2'] = 0,
+		['helmet_1'] = -1, ['helmet_2'] = 0,
 		['chain_1'] = 0, ['chain_2'] = 0,
 		['ears_1'] = -1, ['ears_2'] = 0
     }
