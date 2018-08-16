@@ -1,12 +1,12 @@
-# esx_poolcleaner
+# esx_Ocean-Salvage
 
-Pool Cleaner Job for ESX
+Esx Ocean Salvage Job for ESX
 
 # Getting Started
 
-1. Add esx_poolcleaner folder into resources
+1. Add esx_OceanSalvage folder into resources
 2. Add in server.cfg
-3. Add esx_poolcleaner.sql to database
+3. Add esx_treasurehunter to database
 
 # Configuration
 
