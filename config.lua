@@ -1,9 +1,8 @@
 Config              = {}
 Config.DrawDistance = 100.0
 
-Config.nameJob      = "Salvage"
-Config.nameJobLabel = "Diver"
-Config.platePrefix  = "OCEANMAN"
+Config.JobName      = "salvage"
+Config.PlatePrefix  = "OCEANMAN"
 
 Config.Locale       = 'en'
 
@@ -26,8 +25,8 @@ Config.Zones = {
 		Type    = 1,
 		BlipSprite = 308,
 		BlipColor = 5,
-		BlipName = Config.nameJobLabel.." : Ocean Salvage Job",
-		hint = 'Press ~INPUT_CONTEXT~ to access the job locker'
+		BlipName = _U('blip_locker'),
+		hint = _U('prompt_locker')
 	},
 
 	VehicleSpawner = {
@@ -35,8 +34,8 @@ Config.Zones = {
 		Size  = {x = 1.5, y = 1.5, z = 0.3},
 		Color = {r = 11, g = 203, b = 159},
 		Type  = 1,
-		BlipName = Config.nameJobLabel.." : Vehicle",
-		hint = 'Press ~INPUT_CONTEXT~ to select a vehicle'
+		BlipName = _U('blip_vehicle'),
+		hint = _U('prompt_vehicle')
 	},
 
 	VehicleSpawnPoint = {
@@ -47,12 +46,12 @@ Config.Zones = {
 	},
 
 	VehicleDeleter = {
-		Pos   = {x = -1617.24, y = 5244.99, z = -0.47},
-		Size  = {x = 3.0, y = 3.0, z = 0.3},
+		Pos   = {x = -1617.24, y = 5244.99, z = -0.1},
+		Size  = {x = 3.0, y = 3.0, z = 1.3},
 		Color = {r = 255, g = 0, b = 0},
 		Type  = 1,
-		BlipName = Config.nameJobLabel.." : Return Vehicle",
-		hint = 'Press ~INPUT_CONTEXT~ to return vehicle'
+		BlipName = _U('blip_vehicledeleter'),
+		hint = _U('prompt_vehicledeleter')
 	},
 
 	Vente = {
@@ -60,7 +59,9 @@ Config.Zones = {
 		Size  = {x = 5.0, y = 5.0, z = 0.3},
 		Color = {r = 11, g = 203, b = 159},
 		Type  = 1,
-		BlipName = Config.nameJobLabel.." : Job Cash Out",
+
+		BlipName = _U('blip_cashout'),
+		hint = _U('prompt_cashout'),
 
 		ItemTime = 500,
 		ItemDb_name = "contrat",
@@ -71,8 +72,7 @@ Config.Zones = {
 		ItemRequires = "contrat",
 		ItemRequires_name = "Facture",
 		ItemDrop = 100,
-		ItemPrice  = 800,
-		hint = 'Press ~INPUT_CONTEXT~ to turn in your salvage collected'
+		ItemPrice  = 800
 	}
 
 }

@@ -10,40 +10,44 @@ local Keys = {
     ["NENTER"] = 201, ["N4"] = 108, ["N5"] = 60, ["N6"] = 107, ["N+"] = 96, ["N-"] = 97, ["N7"] = 117, ["N8"] = 61, ["N9"] = 118
 }
 
-ESX                             = nil
-local PlayerData                = {}
-local GUI                       = {}
-GUI.Time                        = 0
-local HasAlreadyEnteredMarker   = false
-local LastZone                  = nil
-local CurrentAction             = nil
-local CurrentActionMsg          = ''
-local CurrentActionData         = {}
-local onDuty                    = false
-local BlipCloakRoom             = nil
-local BlipVehicle               = nil
-local BlipVehicleDeleter		= nil
-local Blips                     = {}
-local OnJob                     = false
-local Done 						= false
+ESX = nil
+
+local HasAlreadyEnteredMarker = false
+local LastZone = nil
+local CurrentAction = nil
+local CurrentActionMsg = ''
+local CurrentActionData = {}
+local onDuty = false
+local BlipCloakRoom = nil
+local BlipVehicle = nil
+local BlipVehicleDeleter = nil
+local Blips = {}
+local OnJob = false
+local Done = false
 
 Citizen.CreateThread(function()
 	while ESX == nil do
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 		Citizen.Wait(10)
 	end
+
+	while ESX.GetPlayerData().job == nil do
+		Citizen.Wait(100)
+	end
+
+	ESX.PlayerData = ESX.GetPlayerData()
+	CreateBlip()
 end)
 
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
-	PlayerData = xPlayer
-	onDuty = false
+	ESX.PlayerData = xPlayer
 	CreateBlip()
 end)
 
 RegisterNetEvent('esx:setJob')
 AddEventHandler('esx:setJob', function(job)
-	PlayerData.job = job
+	ESX.PlayerData.job = job
 	onDuty = false
 	CreateBlip()
 end)
@@ -62,7 +66,7 @@ function StartNPCJob()
 	NPCTargetPool = SelectPool()
 	local zone = Config.Zones[NPCTargetPool]
 
-	Blips['NPCTargetPool'] = AddBlipForCoord(zone.Pos.x,  zone.Pos.y,  zone.Pos.z)
+	Blips['NPCTargetPool'] = AddBlipForCoord(zone.Pos.x, zone.Pos.y, zone.Pos.z)
 	SetBlipRoute(Blips['NPCTargetPool'], true)
 	ESX.ShowNotification(_U('GPS_info'))
 	Done = true
@@ -79,7 +83,7 @@ function StopNPCJob(cancel)
 	if cancel then
 		ESX.ShowNotification(_U('cancel_mission'))
 	else
-		TriggerServerEvent('esx_treasurehunter:GiveItem')
+		TriggerServerEvent('esx_oceansalvage:GiveItem')
 		StartNPCJob()
 		Done = true
 	end
@@ -99,8 +103,8 @@ Citizen.CreateThread(function()
 
 				ESX.ShowHelpNotification(_U('pickup'))
 
-				if IsControlJustReleased(1, Keys["E"]) and PlayerData.job ~= nil then
-					TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_WELDING", 0, true)
+				if IsControlJustReleased(1, Keys["E"]) and ESX.PlayerData.job ~= nil then
+					TaskStartScenarioInPlace(playerPed, 'WORLD_HUMAN_WELDING', 0, true)
 					Citizen.Wait(17000)
 					StopNPCJob()
 					Citizen.Wait(3000)
@@ -125,7 +129,7 @@ function CloakRoomMenu()
 	ESX.UI.Menu.CloseAll()
 
 	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'cloakroom', {
-		title    = 'Job Locker',
+		title    = _U('locker_title'),
 		align    = 'top-left',
 		elements = elements
 	}, function(data, menu)
@@ -137,32 +141,8 @@ function CloakRoomMenu()
 			menu.close()
 			ESX.ShowNotification(_U('end_service_notif'))
 
-			ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
-				local model = nil
-
-				if skin.sex == 0 then
-					model = GetHashKey("mp_m_freemode_01")
-				else
-					model = GetHashKey("mp_f_freemode_01")
-				end
-
-				RequestModel(model)
-				while not HasModelLoaded(model) do
-					RequestModel(model)
-					Citizen.Wait(1)
-				end
-
-				SetPlayerModel(PlayerId(), model)
-				SetModelAsNoLongerNeeded(model)
-
+			ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
 				TriggerEvent('skinchanger:loadSkin', skin)
-				TriggerEvent('esx:restoreLoadout')
-
-				local playerPed = PlayerPedId()
-
-				ClearPedBloodDamage(playerPed)
-				ResetPedVisibleDamage(playerPed)
-				ClearPedLastWeaponDamage(playerPed)
 			end)
 
 		elseif data.current.value == 'job_wear' then
@@ -172,12 +152,7 @@ function CloakRoomMenu()
 			menu.close()
 			ESX.ShowNotification(_U('take_service_notif'))
 			ESX.ShowNotification(_U('start_job'))
-			local playerPed = PlayerPedId()
-			setUniform(data.current.value, playerPed)
-
-			ClearPedBloodDamage(playerPed)
-			ResetPedVisibleDamage(playerPed)
-			ClearPedLastWeaponDamage(playerPed)
+			setUniform(data.current.value)
 
 		end
 
@@ -210,14 +185,15 @@ function VehicleMenu()
 
 		menu.close()
 		local playerPed = PlayerPedId()
-		local platenum = math.random(1000, 9999)
-		local platePrefix = Config.platePrefix
+		local plateNum = math.random(1000, 9999)
+		local platePrefix = Config.PlatePrefix
 
 		ESX.Game.SpawnVehicle(data.current.value.Hash, Config.Zones.VehicleSpawnPoint.Pos, Config.Zones.VehicleSpawnPoint.Heading, function(vehicle)
 			TaskWarpPedIntoVehicle(playerPed, vehicle, -1)
-			SetVehicleNumberPlateText(vehicle, platePrefix .. platenum)
-			plate = GetVehicleNumberPlateText(vehicle)
-			plate = string.gsub(plate, " ", "")
+			SetVehicleNumberPlateText(vehicle, platePrefix .. plateNum)
+
+			local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
+
 			name = 'Véhicule de '..platePrefix
 			TriggerServerEvent('esx_vehiclelock:registerkeyjob', name, plate, 'no')
 		end)
@@ -232,7 +208,7 @@ function VehicleMenu()
 
 end
 
-AddEventHandler('esx_treasurehunter:hasEnteredMarker', function(zone)
+AddEventHandler('esx_oceansalvage:hasEnteredMarker', function(zone)
 
 	if zone == 'Cloakroom' then
 		CurrentAction     = 'cloakroom_menu'
@@ -262,9 +238,9 @@ AddEventHandler('esx_treasurehunter:hasEnteredMarker', function(zone)
 	end
 end)
 
-AddEventHandler('esx_treasurehunter:hasExitedMarker', function(zone)
+AddEventHandler('esx_oceansalvage:hasExitedMarker', function(zone)
 	if zone == 'Vente' then
-		TriggerServerEvent('esx_treasurehunter:stopVente')
+		TriggerServerEvent('esx_oceansalvage:stopVente')
 	end
 
 	CurrentAction = nil
@@ -272,7 +248,7 @@ AddEventHandler('esx_treasurehunter:hasExitedMarker', function(zone)
 end)
 
 function CreateBlip()
-	if PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob then
+	if ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name == Config.JobName then
 
 		if BlipCloakRoom == nil then
 
@@ -294,12 +270,13 @@ function CreateBlip()
 
 	end
 
-	if PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob and onDuty then
+	if ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name == Config.JobName and onDuty then
 
 		BlipVehicle = AddBlipForCoord(Config.Zones.VehicleSpawner.Pos.x, Config.Zones.VehicleSpawner.Pos.y, Config.Zones.VehicleSpawner.Pos.z)
 		SetBlipSprite(BlipVehicle, Config.Zones.VehicleSpawner.BlipSprite)
 		SetBlipColour(BlipVehicle, Config.Zones.VehicleSpawner.BlipColor)
 		SetBlipAsShortRange(BlipVehicle, true)
+
 		BeginTextCommandSetBlipName("STRING")
 		AddTextComponentString(Config.Zones.VehicleSpawner.BlipName)
 		EndTextCommandSetBlipName(BlipVehicle)
@@ -308,6 +285,7 @@ function CreateBlip()
 		SetBlipSprite(BlipVente, Config.Zones.Vente.BlipSprite)
 		SetBlipColour(BlipVente, Config.Zones.Vente.BlipColor)
 		SetBlipAsShortRange(BlipVente, true)
+
 		BeginTextCommandSetBlipName("STRING")
 		AddTextComponentString(Config.Zones.Vente.BlipName)
 		EndTextCommandSetBlipName(BlipVente)
@@ -316,6 +294,7 @@ function CreateBlip()
 		SetBlipSprite(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipSprite)
 		SetBlipColour(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipColor)
 		SetBlipAsShortRange(BlipVehicleDeleter, true)
+
 		BeginTextCommandSetBlipName("STRING")
 		AddTextComponentString(Config.Zones.VehicleDeleter.BlipName)
 		EndTextCommandSetBlipName(BlipVehicleDeleter)
@@ -338,14 +317,14 @@ function CreateBlip()
 	end
 end
 
--- Activation du marker au sol
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(0)
-		if PlayerData.job ~= nil then
+
+		if ESX.PlayerData.job ~= nil then
 			local coords = GetEntityCoords(PlayerPedId())
 
-			if PlayerData.job.name == Config.nameJob then
+			if ESX.PlayerData.job.name == Config.JobName then
 				if onDuty then
 
 					for k,v in pairs(Config.Zones) do
@@ -369,17 +348,16 @@ Citizen.CreateThread(function()
 	end
 end)
 
--- Detection de l'entrer/sortie de la zone du joueur
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(1)
 
-		if PlayerData.job ~= nil then
+		if ESX.PlayerData.job ~= nil then
 			local coords      = GetEntityCoords(PlayerPedId())
 			local isInMarker  = false
 			local currentZone = nil
 
-			if PlayerData.job.name == Config.nameJob then
+			if ESX.PlayerData.job.name == Config.JobName then
 				if onDuty then
 					for k,v in pairs(Config.Zones) do
 						if v ~= Config.Zones.Cloakroom then
@@ -401,11 +379,11 @@ Citizen.CreateThread(function()
 			if (isInMarker and not HasAlreadyEnteredMarker) or (isInMarker and LastZone ~= currentZone) then
 				HasAlreadyEnteredMarker = true
 				LastZone                = currentZone
-				TriggerEvent('esx_treasurehunter:hasEnteredMarker', currentZone)
+				TriggerEvent('esx_oceansalvage:hasEnteredMarker', currentZone)
 			end
 			if not isInMarker and HasAlreadyEnteredMarker then
 				HasAlreadyEnteredMarker = false
-				TriggerEvent('esx_treasurehunter:hasExitedMarker', LastZone)
+				TriggerEvent('esx_oceansalvage:hasExitedMarker', LastZone)
 			end
 		end
 	end
@@ -418,13 +396,13 @@ Citizen.CreateThread(function()
 		if CurrentAction ~= nil then
 			ESX.ShowHelpNotification(CurrentActionMsg)
 
-			if (IsControlJustReleased(1, Keys["E"]) or IsControlJustReleased(2, Keys["RIGHT"])) and PlayerData.job ~= nil then
+			if (IsControlJustReleased(1, Keys["E"]) or IsControlJustReleased(2, Keys["RIGHT"])) and ESX.PlayerData.job ~= nil then
 				local playerPed = PlayerPedId()
 
-				if PlayerData.job.name == Config.nameJob then
+				if ESX.PlayerData.job.name == Config.JobName then
 					if CurrentAction == 'cloakroom_menu' then
 
-						if IsPedInAnyVehicle(playerPed, 0) then
+						if IsPedInAnyVehicle(playerPed, false) then
 							ESX.ShowNotification(_U('in_vehicle'))
 						else
 							CloakRoomMenu()
@@ -432,7 +410,7 @@ Citizen.CreateThread(function()
 
 					elseif CurrentAction == 'vehiclespawn_menu' then
 
-						if IsPedInAnyVehicle(playerPed, 0) then
+						if IsPedInAnyVehicle(playerPed, false) then
 							ESX.ShowNotification(_U('in_vehicle'))
 						else
 							VehicleMenu()
@@ -440,7 +418,7 @@ Citizen.CreateThread(function()
 
 					elseif CurrentAction == 'vente' then
 
-						TriggerServerEvent('esx_treasurehunter:startVente')
+						TriggerServerEvent('esx_oceansalvage:startVente')
 						TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_CLIPBOARD", 0, 1)
 
 					elseif CurrentAction == 'delete_vehicle' then
@@ -448,9 +426,9 @@ Citizen.CreateThread(function()
 						local playerPed = PlayerPedId()
 						local vehicle = GetVehiclePedIsIn(playerPed, false)
 						local hash = GetEntityModel(vehicle)
-						local plate = GetVehicleNumberPlateText(vehicle)
-						local plate = string.gsub(plate, " ", "")
-						local platePrefix = Config.platePrefix
+						local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
+
+						local platePrefix = Config.PlatePrefix
 
 						if string.find(plate, platePrefix) then
 							local truck = Config.Vehicles.Truck
@@ -480,7 +458,7 @@ Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(10)
 
-		if IsControlJustReleased(1, Keys["F10"]) and PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob then
+		if IsControlJustReleased(1, Keys["F10"]) and ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name == Config.JobName then
 
 			if Onjob then
 				StopNPCJob(true)
@@ -489,7 +467,7 @@ Citizen.CreateThread(function()
 			else
 				local playerPed = PlayerPedId()
 
-				if IsPedInAnyVehicle(playerPed,  false) and IsVehicleModel(GetVehiclePedIsIn(playerPed,  false), GetHashKey("dinghy")) then
+				if IsPedInAnyVehicle(playerPed, false) and IsVehicleModel(GetVehiclePedIsIn(playerPed, false), GetHashKey("dinghy")) then
 					StartNPCJob()
 					Onjob = true
 				else
@@ -500,7 +478,7 @@ Citizen.CreateThread(function()
 	end
 end)
 
-function setUniform(job, playerPed)
+function setUniform(job)
 	TriggerEvent('skinchanger:getSkin', function(skin)
 
 		if skin.sex == 0 then
