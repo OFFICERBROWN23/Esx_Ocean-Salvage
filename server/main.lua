@@ -1,5 +1,5 @@
-ESX                			 = nil
-local PlayersVente			 = {}
+ESX = nil
+local PlayersVente = {}
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
@@ -12,7 +12,6 @@ AddEventHandler('esx_treasurehunter:GiveItem', function()
 
 	if Quantity >= 15 then
 		TriggerClientEvent('esx:showNotification', _source, _U('stop_npc'))
-		return
 	else
 		local amount = Config.Zones.Vente.ItemAdd
 		local item = Config.Zones.Vente.ItemDb_name
@@ -39,6 +38,7 @@ local function Vente(source)
 			else
 				local amount = Config.Zones.Vente.ItemRemove
 				local item = Config.Zones.Vente.ItemRequires
+
 				Citizen.Wait(1500)
 				xPlayer.removeInventoryItem(item, amount)
 				xPlayer.addMoney(Config.Zones.Vente.ItemPrice)
@@ -52,7 +52,6 @@ end
 
 RegisterServerEvent('esx_treasurehunter:startVente')
 AddEventHandler('esx_treasurehunter:startVente', function()
-
 	local _source = source
 
 	if PlayersVente[_source] == false then
@@ -67,7 +66,6 @@ end)
 
 RegisterServerEvent('esx_treasurehunter:stopVente')
 AddEventHandler('esx_treasurehunter:stopVente', function()
-
 	local _source = source
 
 	if PlayersVente[_source] == true then

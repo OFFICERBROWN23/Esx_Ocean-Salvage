@@ -36,51 +36,48 @@ end)
 
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
-    PlayerData = xPlayer
+	PlayerData = xPlayer
 	onDuty = false
-    CreateBlip()
+	CreateBlip()
 end)
 
 RegisterNetEvent('esx:setJob')
 AddEventHandler('esx:setJob', function(job)
-    PlayerData.job = job
+	PlayerData.job = job
 	onDuty = false
-    CreateBlip()
+	CreateBlip()
 end)
 
--- NPC MISSIONS
-
 function SelectPool()
-    local index = GetRandomIntInRange(1,  #Config.Pool)
+	local index = GetRandomIntInRange(1, #Config.Pool)
 
-    for k,v in pairs(Config.Zones) do
-      if v.Pos.x == Config.Pool[index].x and v.Pos.y == Config.Pool[index].y and v.Pos.z == Config.Pool[index].z then
-        return k
-      end
-    end
+	for k,v in pairs(Config.Zones) do
+		if v.Pos.x == Config.Pool[index].x and v.Pos.y == Config.Pool[index].y and v.Pos.z == Config.Pool[index].z then
+			return k
+		end
+	end
 end
 
 function StartNPCJob()
-    NPCTargetPool     = SelectPool()
-    local zone            = Config.Zones[NPCTargetPool]
+	NPCTargetPool = SelectPool()
+	local zone = Config.Zones[NPCTargetPool]
 
-    Blips['NPCTargetPool'] = AddBlipForCoord(zone.Pos.x,  zone.Pos.y,  zone.Pos.z)
-    SetBlipRoute(Blips['NPCTargetPool'], true)
-    ESX.ShowNotification(_U('GPS_info'))
-    Done = true
+	Blips['NPCTargetPool'] = AddBlipForCoord(zone.Pos.x,  zone.Pos.y,  zone.Pos.z)
+	SetBlipRoute(Blips['NPCTargetPool'], true)
+	ESX.ShowNotification(_U('GPS_info'))
+	Done = true
 end
 
 function StopNPCJob(cancel)
-
-    if Blips['NPCTargetPool'] ~= nil then
-      RemoveBlip(Blips['NPCTargetPool'])
-      Blips['NPCTargetPool'] = nil
+	if Blips['NPCTargetPool'] ~= nil then
+		RemoveBlip(Blips['NPCTargetPool'])
+		Blips['NPCTargetPool'] = nil
 	end
 
 	OnJob = false
 
-    if cancel then
-	  ESX.ShowNotification(_U('cancel_mission'))
+	if cancel then
+		ESX.ShowNotification(_U('cancel_mission'))
 	else
 		TriggerServerEvent('esx_treasurehunter:GiveItem')
 		StartNPCJob()
@@ -89,33 +86,32 @@ function StopNPCJob(cancel)
 end
 
 Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(10)
+	while true do
+		Citizen.Wait(10)
 
-        if NPCTargetPool ~= nil then
+		if NPCTargetPool ~= nil then
 
-            local coords = GetEntityCoords(GetPlayerPed(-1))
-            local zone   = Config.Zones[NPCTargetPool]
-            local playerPed = GetPlayerPed(-1)
+			local playerPed = PlayerPedId()
+			local coords = GetEntityCoords(playerPed)
+			local zone = Config.Zones[NPCTargetPool]
 
-           	if GetDistanceBetweenCoords(coords, zone.Pos.x, zone.Pos.y, zone.Pos.z, true) < 3 then
+			if GetDistanceBetweenCoords(coords, zone.Pos.x, zone.Pos.y, zone.Pos.z, true) < 3 then
 
-                HelpPromt(_U('pickup'))
+				ESX.ShowHelpNotification(_U('pickup'))
 
-                if IsControlJustReleased(1, Keys["E"]) and PlayerData.job ~= nil then
-                    TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_WELDING", 0, true)
-                    Wait(17000)
-                    StopNPCJob()
-                    Wait(3000)
-                    ClearPedTasksImmediately(playerPed)
-                    Done = false
-                end
-            end
-        end
-    end
+				if IsControlJustReleased(1, Keys["E"]) and PlayerData.job ~= nil then
+					TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_WELDING", 0, true)
+					Citizen.Wait(17000)
+					StopNPCJob()
+					Citizen.Wait(3000)
+					ClearPedTasksImmediately(playerPed)
+					Done = false
+				end
+			end
+		end
+	end
 end)
 
--- Prise de service
 function CloakRoomMenu()
 
 	local elements = {}
@@ -126,172 +122,160 @@ function CloakRoomMenu()
 		table.insert(elements, {label = _U('take_service'), value = 'job_wear'})
 	end
 
-    ESX.UI.Menu.CloseAll()
+	ESX.UI.Menu.CloseAll()
 
-    ESX.UI.Menu.Open(
-        'default', GetCurrentResourceName(), 'cloakroom',
-        {
-            title = 'Job Locker',
-			align    = 'right',
-            elements = elements
-        },
-        function(data, menu)
+	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'cloakroom', {
+		title    = 'Job Locker',
+		align    = 'top-left',
+		elements = elements
+	}, function(data, menu)
 
-            if data.current.value == 'citizen_wear' then
-				onDuty = false
-				CreateBlip()
-				menu.close()
-                ESX.ShowNotification(_U('end_service_notif'))
-				ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
-				  local model = nil
+		if data.current.value == 'citizen_wear' then
 
-				  if skin.sex == 0 then
+			onDuty = false
+			CreateBlip()
+			menu.close()
+			ESX.ShowNotification(_U('end_service_notif'))
+
+			ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
+				local model = nil
+
+				if skin.sex == 0 then
 					model = GetHashKey("mp_m_freemode_01")
-				  else
+				else
 					model = GetHashKey("mp_f_freemode_01")
-				  end
+				end
 
-				  RequestModel(model)
-				  while not HasModelLoaded(model) do
+				RequestModel(model)
+				while not HasModelLoaded(model) do
 					RequestModel(model)
 					Citizen.Wait(1)
-				  end
+				end
 
-				  SetPlayerModel(PlayerId(), model)
-				  SetModelAsNoLongerNeeded(model)
+				SetPlayerModel(PlayerId(), model)
+				SetModelAsNoLongerNeeded(model)
 
-				  TriggerEvent('skinchanger:loadSkin', skin)
-				  TriggerEvent('esx:restoreLoadout')
+				TriggerEvent('skinchanger:loadSkin', skin)
+				TriggerEvent('esx:restoreLoadout')
 
-				  local playerPed = GetPlayerPed(-1)
-				  -- SetPedArmour(playerPed, 0)
-				  ClearPedBloodDamage(playerPed)
-				  ResetPedVisibleDamage(playerPed)
-				  ClearPedLastWeaponDamage(playerPed)
-				end)
-            end
+				local playerPed = PlayerPedId()
 
-            if data.current.value == 'job_wear' then
-				onDuty = true
-				CreateBlip()
-                menu.close()
-				ESX.ShowNotification(_U('take_service_notif'))
-				ESX.ShowNotification(_U('start_job'))
-				local playerPed = GetPlayerPed(-1)
-				setUniform(data.current.value, playerPed)
-
-				-- SetPedArmour(playerPed, 0)
 				ClearPedBloodDamage(playerPed)
 				ResetPedVisibleDamage(playerPed)
 				ClearPedLastWeaponDamage(playerPed)
-            end
+			end)
 
-            CurrentAction     = 'cloakroom_menu'
-            CurrentActionMsg  = Config.Zones.Cloakroom.hint
-            CurrentActionData = {}
-        end,
-        function(data, menu)
+		elseif data.current.value == 'job_wear' then
 
-            menu.close()
+			onDuty = true
+			CreateBlip()
+			menu.close()
+			ESX.ShowNotification(_U('take_service_notif'))
+			ESX.ShowNotification(_U('start_job'))
+			local playerPed = PlayerPedId()
+			setUniform(data.current.value, playerPed)
 
-			CurrentAction     = 'cloakroom_menu'
-			CurrentActionMsg  = Config.Zones.Cloakroom.hint
-            CurrentActionData = {}
-        end
-    )
+			ClearPedBloodDamage(playerPed)
+			ResetPedVisibleDamage(playerPed)
+			ClearPedLastWeaponDamage(playerPed)
+
+		end
+
+		CurrentAction     = 'cloakroom_menu'
+		CurrentActionMsg  = Config.Zones.Cloakroom.hint
+		CurrentActionData = {}
+	end, function(data, menu)
+		menu.close()
+
+		CurrentAction     = 'cloakroom_menu'
+		CurrentActionMsg  = Config.Zones.Cloakroom.hint
+		CurrentActionData = {}
+	end)
 
 end
 
--- Prise du véhicule
 function VehicleMenu()
 
-    local elements = {
-        {label = Config.Vehicles.Truck.Label, value = Config.Vehicles.Truck}
-    }
+	local elements = {
+		{label = Config.Vehicles.Truck.Label, value = Config.Vehicles.Truck}
+	}
 
-    ESX.UI.Menu.CloseAll()
+	ESX.UI.Menu.CloseAll()
 
-    ESX.UI.Menu.Open(
-        'default', GetCurrentResourceName(), 'spawn_vehicle',
-        {
-            title    = _U('Vehicle_Menu_Title'),
-            elements = elements
-        },
-        function(data, menu)
-            for i=1, #elements, 1 do
-				menu.close()
-				local playerPed = GetPlayerPed(-1)
-				local coords    = Config.Zones.VehicleSpawnPoint.Pos
-				local Heading    = Config.Zones.VehicleSpawnPoint.Heading
-				local platenum = math.random(1000, 9999)
-				local platePrefix = Config.platePrefix
-				ESX.Game.SpawnVehicle(data.current.value.Hash, coords, Heading, function(vehicle)
-					TaskWarpPedIntoVehicle(playerPed, vehicle, -1)
-					SetVehicleNumberPlateText(vehicle, platePrefix .. platenum)
-					plate = GetVehicleNumberPlateText(vehicle)
-					plate = string.gsub(plate, " ", "")
-					name = 'Véhicule de '..platePrefix
-					TriggerServerEvent('esx_vehiclelock:registerkeyjob', name, plate, 'no')
-				end)
-				break
-            end
-            menu.close()
+	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'spawn_vehicle', {
+		title    = _U('Vehicle_Menu_Title'),
+		align    = 'top-left',
+		elements = elements
+	}, function(data, menu)
 
-    end,
-function(data, menu)
-    menu.close()
-    CurrentAction     = 'vehiclespawn_menu'
-    CurrentActionMsg  = Config.Zones.VehicleSpawner.hint
-    CurrentActionData = {}
-end
-)
+		menu.close()
+		local playerPed = PlayerPedId()
+		local platenum = math.random(1000, 9999)
+		local platePrefix = Config.platePrefix
+
+		ESX.Game.SpawnVehicle(data.current.value.Hash, Config.Zones.VehicleSpawnPoint.Pos, Config.Zones.VehicleSpawnPoint.Heading, function(vehicle)
+			TaskWarpPedIntoVehicle(playerPed, vehicle, -1)
+			SetVehicleNumberPlateText(vehicle, platePrefix .. platenum)
+			plate = GetVehicleNumberPlateText(vehicle)
+			plate = string.gsub(plate, " ", "")
+			name = 'Véhicule de '..platePrefix
+			TriggerServerEvent('esx_vehiclelock:registerkeyjob', name, plate, 'no')
+		end)
+
+	end, function(data, menu)
+		menu.close()
+
+		CurrentAction     = 'vehiclespawn_menu'
+		CurrentActionMsg  = Config.Zones.VehicleSpawner.hint
+		CurrentActionData = {}
+	end)
+
 end
 
--- Quand le joueur entre dans la zone
 AddEventHandler('esx_treasurehunter:hasEnteredMarker', function(zone)
 
-    if zone == 'Cloakroom' then
-        CurrentAction        = 'cloakroom_menu'
-        CurrentActionMsg     = Config.Zones.Cloakroom.hint
-        CurrentActionData    = {}
-    end
+	if zone == 'Cloakroom' then
+		CurrentAction     = 'cloakroom_menu'
+		CurrentActionMsg  = Config.Zones.Cloakroom.hint
+		CurrentActionData = {}
+	elseif zone == 'VehicleSpawner' then
+		CurrentAction     = 'vehiclespawn_menu'
+		CurrentActionMsg  = Config.Zones.VehicleSpawner.hint
+		CurrentActionData = {}
+	elseif zone == 'VehicleDeleter' then
 
-    if zone == 'VehicleSpawner' then
-        CurrentAction        = 'vehiclespawn_menu'
-        CurrentActionMsg     = Config.Zones.VehicleSpawner.hint
-        CurrentActionData    = {}
-    end
+		local playerPed = PlayerPedId()
+		if IsPedInAnyVehicle(playerPed, false) then
+			local vehicle = GetVehiclePedIsIn(playerPed, false)
 
-    if zone == 'VehicleDeleter' then
-        local playerPed = GetPlayerPed(-1)
-        if IsPedInAnyVehicle(playerPed,  false) then
-          CurrentAction        = 'delete_vehicle'
-          CurrentActionMsg     = Config.Zones.VehicleDeleter.hint
-          CurrentActionData    = {}
-        end
-    end
+			if GetPedInVehicleSeat(vehicle, -1) == playerPed then
+				CurrentAction     = 'delete_vehicle'
+				CurrentActionMsg  = Config.Zones.VehicleDeleter.hint
+				CurrentActionData = {}
+			end
+		end
 
-    if zone == 'Vente' then
-        CurrentAction        = 'vente'
-        CurrentActionMsg     = Config.Zones.Vente.hint
-        CurrentActionData    = {}
-    end
+	elseif zone == 'Vente' then
+		CurrentAction     = 'vente'
+		CurrentActionMsg  = Config.Zones.Vente.hint
+		CurrentActionData = {}
+	end
 end)
 
--- Quand le joueur sort de la zone
 AddEventHandler('esx_treasurehunter:hasExitedMarker', function(zone)
-
 	if zone == 'Vente' then
 		TriggerServerEvent('esx_treasurehunter:stopVente')
 	end
-    CurrentAction = nil
+
+	CurrentAction = nil
 	ESX.UI.Menu.CloseAll()
 end)
 
 function CreateBlip()
-    if PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob then
+	if PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob then
 
 		if BlipCloakRoom == nil then
+
 			BlipCloakRoom = AddBlipForCoord(Config.Zones.Cloakroom.Pos.x, Config.Zones.Cloakroom.Pos.y, Config.Zones.Cloakroom.Pos.z)
 			SetBlipSprite(BlipCloakRoom, Config.Zones.Cloakroom.BlipSprite)
 			SetBlipColour(BlipCloakRoom, Config.Zones.Cloakroom.BlipColor)
@@ -299,65 +283,67 @@ function CreateBlip()
 			BeginTextCommandSetBlipName("STRING")
 			AddTextComponentString(Config.Zones.Cloakroom.BlipName)
 			EndTextCommandSetBlipName(BlipCloakRoom)
+
 		end
 	else
 
-        if BlipCloakRoom ~= nil then
-            RemoveBlip(BlipCloakRoom)
-            BlipCloakRoom = nil
-        end
+		if BlipCloakRoom ~= nil then
+			RemoveBlip(BlipCloakRoom)
+			BlipCloakRoom = nil
+		end
+
 	end
 
 	if PlayerData.job ~= nil and PlayerData.job.name == Config.nameJob and onDuty then
 
-        BlipVehicle = AddBlipForCoord(Config.Zones.VehicleSpawner.Pos.x, Config.Zones.VehicleSpawner.Pos.y, Config.Zones.VehicleSpawner.Pos.z)
-        SetBlipSprite(BlipVehicle, Config.Zones.VehicleSpawner.BlipSprite)
-        SetBlipColour(BlipVehicle, Config.Zones.VehicleSpawner.BlipColor)
-        SetBlipAsShortRange(BlipVehicle, true)
-        BeginTextCommandSetBlipName("STRING")
-        AddTextComponentString(Config.Zones.VehicleSpawner.BlipName)
-        EndTextCommandSetBlipName(BlipVehicle)
+		BlipVehicle = AddBlipForCoord(Config.Zones.VehicleSpawner.Pos.x, Config.Zones.VehicleSpawner.Pos.y, Config.Zones.VehicleSpawner.Pos.z)
+		SetBlipSprite(BlipVehicle, Config.Zones.VehicleSpawner.BlipSprite)
+		SetBlipColour(BlipVehicle, Config.Zones.VehicleSpawner.BlipColor)
+		SetBlipAsShortRange(BlipVehicle, true)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(Config.Zones.VehicleSpawner.BlipName)
+		EndTextCommandSetBlipName(BlipVehicle)
 
-        BlipVente = AddBlipForCoord(Config.Zones.Vente.Pos.x, Config.Zones.Vente.Pos.y, Config.Zones.Vente.Pos.z)
-        SetBlipSprite(BlipVente, Config.Zones.Vente.BlipSprite)
-        SetBlipColour(BlipVente, Config.Zones.Vente.BlipColor)
-        SetBlipAsShortRange(BlipVente, true)
-        BeginTextCommandSetBlipName("STRING")
-        AddTextComponentString(Config.Zones.Vente.BlipName)
-        EndTextCommandSetBlipName(BlipVente)
+		BlipVente = AddBlipForCoord(Config.Zones.Vente.Pos.x, Config.Zones.Vente.Pos.y, Config.Zones.Vente.Pos.z)
+		SetBlipSprite(BlipVente, Config.Zones.Vente.BlipSprite)
+		SetBlipColour(BlipVente, Config.Zones.Vente.BlipColor)
+		SetBlipAsShortRange(BlipVente, true)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(Config.Zones.Vente.BlipName)
+		EndTextCommandSetBlipName(BlipVente)
 
-        BlipVehicleDeleter = AddBlipForCoord(Config.Zones.VehicleDeleter.Pos.x, Config.Zones.VehicleDeleter.Pos.y, Config.Zones.VehicleDeleter.Pos.z)
-        SetBlipSprite(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipSprite)
-        SetBlipColour(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipColor)
-        SetBlipAsShortRange(BlipVehicleDeleter, true)
-        BeginTextCommandSetBlipName("STRING")
-        AddTextComponentString(Config.Zones.VehicleDeleter.BlipName)
-        EndTextCommandSetBlipName(BlipVehicleDeleter)
-    else
+		BlipVehicleDeleter = AddBlipForCoord(Config.Zones.VehicleDeleter.Pos.x, Config.Zones.VehicleDeleter.Pos.y, Config.Zones.VehicleDeleter.Pos.z)
+		SetBlipSprite(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipSprite)
+		SetBlipColour(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipColor)
+		SetBlipAsShortRange(BlipVehicleDeleter, true)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(Config.Zones.VehicleDeleter.BlipName)
+		EndTextCommandSetBlipName(BlipVehicleDeleter)
+	else
 
-        if BlipVehicle ~= nil then
-            RemoveBlip(BlipVehicle)
-            BlipVehicle = nil
-        end
+		if BlipVehicle ~= nil then
+			RemoveBlip(BlipVehicle)
+			BlipVehicle = nil
+		end
 
-        if BlipVente ~= nil then
-            RemoveBlip(BlipVente)
-            BlipVente = nil
-        end
+		if BlipVente ~= nil then
+			RemoveBlip(BlipVente)
+			BlipVente = nil
+		end
 
-        if BlipVehicleDeleter ~= nil then
-            RemoveBlip(BlipVehicleDeleter)
-            BlipVehicleDeleter = nil
-        end
-    end
+		if BlipVehicleDeleter ~= nil then
+			RemoveBlip(BlipVehicleDeleter)
+			BlipVehicleDeleter = nil
+		end
+	end
 end
 
 -- Activation du marker au sol
 Citizen.CreateThread(function()
 	while true do
-		Wait(0)
+		Citizen.Wait(0)
 		if PlayerData.job ~= nil then
-			local coords = GetEntityCoords(GetPlayerPed(-1))
+			local coords = GetEntityCoords(PlayerPedId())
 
 			if PlayerData.job.name == Config.nameJob then
 				if onDuty then
@@ -376,6 +362,8 @@ Citizen.CreateThread(function()
 				if(Cloakroom.Type ~= -1 and GetDistanceBetweenCoords(coords, Cloakroom.Pos.x, Cloakroom.Pos.y, Cloakroom.Pos.z, true) < Config.DrawDistance) then
 					DrawMarker(Cloakroom.Type, Cloakroom.Pos.x, Cloakroom.Pos.y, Cloakroom.Pos.z, 0.0, 0.0, 0.0, 0, 0.0, 0.0, Cloakroom.Size.x, Cloakroom.Size.y, Cloakroom.Size.z, Cloakroom.Color.r, Cloakroom.Color.g, Cloakroom.Color.b, 100, false, true, 2, false, false, false, false)
 				end
+			else
+				Citizen.Wait(500)
 			end
 		end
 	end
@@ -384,9 +372,10 @@ end)
 -- Detection de l'entrer/sortie de la zone du joueur
 Citizen.CreateThread(function()
 	while true do
-		Wait(1)
+		Citizen.Wait(1)
+
 		if PlayerData.job ~= nil then
-			local coords      = GetEntityCoords(GetPlayerPed(-1))
+			local coords      = GetEntityCoords(PlayerPedId())
 			local isInMarker  = false
 			local currentZone = nil
 
@@ -424,57 +413,63 @@ end)
 
 -- Action après la demande d'accés
 Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(10)
-        if CurrentAction ~= nil then
-            SetTextComponentFormat('STRING')
-            AddTextComponentString(CurrentActionMsg)
-            DisplayHelpTextFromStringLabel(0, 0, 1, -1)
-            if (IsControlJustReleased(1, Keys["E"]) or IsControlJustReleased(2, Keys["RIGHT"])) and PlayerData.job ~= nil then
-				local playerPed = GetPlayerPed(-1)
+	while true do
+		Citizen.Wait(10)
+		if CurrentAction ~= nil then
+			ESX.ShowHelpNotification(CurrentActionMsg)
+
+			if (IsControlJustReleased(1, Keys["E"]) or IsControlJustReleased(2, Keys["RIGHT"])) and PlayerData.job ~= nil then
+				local playerPed = PlayerPedId()
+
 				if PlayerData.job.name == Config.nameJob then
 					if CurrentAction == 'cloakroom_menu' then
+
 						if IsPedInAnyVehicle(playerPed, 0) then
 							ESX.ShowNotification(_U('in_vehicle'))
 						else
 							CloakRoomMenu()
 						end
-					end
-					if CurrentAction == 'vehiclespawn_menu' then
+
+					elseif CurrentAction == 'vehiclespawn_menu' then
+
 						if IsPedInAnyVehicle(playerPed, 0) then
 							ESX.ShowNotification(_U('in_vehicle'))
 						else
 							VehicleMenu()
 						end
-					end
-					if CurrentAction == 'vente' then
+
+					elseif CurrentAction == 'vente' then
+
 						TriggerServerEvent('esx_treasurehunter:startVente')
 						TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_CLIPBOARD", 0, 1)
-					end
-					if CurrentAction == 'delete_vehicle' then
-					  local playerPed = GetPlayerPed(-1)
-					  local vehicle   = GetVehiclePedIsIn(playerPed,  false)
-					  local hash      = GetEntityModel(vehicle)
-					  local plate = GetVehicleNumberPlateText(vehicle)
-					  local plate = string.gsub(plate, " ", "")
-					  local platePrefix = Config.platePrefix
 
-					  if string.find (plate, platePrefix) then
-						local truck = Config.Vehicles.Truck
+					elseif CurrentAction == 'delete_vehicle' then
 
-						if hash == GetHashKey(truck.Hash) then
-							if GetVehicleEngineHealth(vehicle) <= 500 or GetVehicleBodyHealth(vehicle) <= 500 then
-								ESX.ShowNotification(_U('vehicle_broken'))
-							else
-								TriggerServerEvent('esx_vehiclelock:vehjobSup', plate, 'no')
-								DeleteVehicle(vehicle)
+						local playerPed = PlayerPedId()
+						local vehicle = GetVehiclePedIsIn(playerPed, false)
+						local hash = GetEntityModel(vehicle)
+						local plate = GetVehicleNumberPlateText(vehicle)
+						local plate = string.gsub(plate, " ", "")
+						local platePrefix = Config.platePrefix
+
+						if string.find(plate, platePrefix) then
+							local truck = Config.Vehicles.Truck
+
+							if hash == GetHashKey(truck.Hash) then
+								if GetVehicleEngineHealth(vehicle) <= 500 or GetVehicleBodyHealth(vehicle) <= 500 then
+									ESX.ShowNotification(_U('vehicle_broken'))
+								else
+									TriggerServerEvent('esx_vehiclelock:vehjobSup', plate, 'no')
+									DeleteVehicle(vehicle)
+								end
 							end
+						else
+							ESX.ShowNotification(_U('bad_vehicle'))
 						end
-					  else
-						ESX.ShowNotification(_U('bad_vehicle'))
-					  end
+
 					end
-               	    CurrentAction = nil
+
+					CurrentAction = nil
 				end
 			end
 		end
@@ -492,7 +487,7 @@ Citizen.CreateThread(function()
 				RemoveBlip(Blips['NPCTargetPool'])
 				Onjob = false
 			else
-				local playerPed = GetPlayerPed(-1)
+				local playerPed = PlayerPedId()
 
 				if IsPedInAnyVehicle(playerPed,  false) and IsVehicleModel(GetVehiclePedIsIn(playerPed,  false), GetHashKey("dinghy")) then
 					StartNPCJob()
@@ -506,30 +501,21 @@ Citizen.CreateThread(function()
 end)
 
 function setUniform(job, playerPed)
-  TriggerEvent('skinchanger:getSkin', function(skin)
+	TriggerEvent('skinchanger:getSkin', function(skin)
 
-    if skin.sex == 0 then
-      if Config.Uniforms[job].male ~= nil then
-        TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].male)
-      else
-        ESX.ShowNotification(_U('no_outfit'))
-      end
-    else
-      if Config.Uniforms[job].female ~= nil then
-        TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].female)
-      else
-        ESX.ShowNotification(_U('no_outfit'))
-      end
-    end
-
-  end)
-end
-
-function HelpPromt(text)
-	Citizen.CreateThread(function()
-		SetTextComponentFormat("STRING")
-		AddTextComponentString(text)
-		DisplayHelpTextFromStringLabel(0, state, 0, -1)
+		if skin.sex == 0 then
+			if Config.Uniforms[job].male ~= nil then
+				TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].male)
+			else
+				ESX.ShowNotification(_U('no_outfit'))
+			end
+		else
+			if Config.Uniforms[job].female ~= nil then
+				TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].female)
+			else
+				ESX.ShowNotification(_U('no_outfit'))
+			end
+		end
 
 	end)
 end
