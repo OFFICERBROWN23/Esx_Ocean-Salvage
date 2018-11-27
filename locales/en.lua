@@ -15,6 +15,7 @@ Locales['en'] = {
   ['stop_npc'] = 'job ~g~complete~s~: Return to the depot.',
   ['salvage_collected'] = 'salvage has been collected, ~g~move on~s~.',
   ['locker_title'] = 'job locker',
+  ['locker_nooutfit'] = 'your outfit is missing!',
 
   ['sell_cashing'] = '~g~Cashing~s~ bills...',
   ['sell_nobills'] = '~r~You don\'t have any bills to cash',

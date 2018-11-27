@@ -485,13 +485,13 @@ function setUniform(job)
 			if Config.Uniforms[job].male ~= nil then
 				TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].male)
 			else
-				ESX.ShowNotification(_U('no_outfit'))
+				ESX.ShowNotification(_U('locker_nooutfit'))
 			end
 		else
 			if Config.Uniforms[job].female ~= nil then
 				TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms[job].female)
 			else
-				ESX.ShowNotification(_U('no_outfit'))
+				ESX.ShowNotification(_U('locker_nooutfit'))
 			end
 		end
 
