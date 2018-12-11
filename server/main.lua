@@ -1,10 +1,10 @@
-ESX                			 = nil
-local PlayersVente			 = {}
+ESX = nil
+local PlayersVente = {}
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
-RegisterServerEvent('esx_treasurehunter:GiveItem')
-AddEventHandler('esx_treasurehunter:GiveItem', function()
+RegisterServerEvent('esx_oceansalvage:GiveItem')
+AddEventHandler('esx_oceansalvage:GiveItem', function()
 	local _source = source
 	local xPlayer = ESX.GetPlayerFromId(_source)
 
@@ -12,12 +12,11 @@ AddEventHandler('esx_treasurehunter:GiveItem', function()
 
 	if Quantity >= 15 then
 		TriggerClientEvent('esx:showNotification', _source, _U('stop_npc'))
-		return
 	else
 		local amount = Config.Zones.Vente.ItemAdd
 		local item = Config.Zones.Vente.ItemDb_name
 		xPlayer.addInventoryItem(item, amount)
-		TriggerClientEvent('esx:showNotification', _source, 'Salvage Collected ~g~ move on.')
+		TriggerClientEvent('esx:showNotification', _source, _U('salvage_collected'))
 	end
 
 end)
@@ -34,15 +33,16 @@ local function Vente(source)
 			local Quantity = xPlayer.getInventoryItem(Config.Zones.Vente.ItemRequires).count
 
 			if Quantity < Config.Zones.Vente.ItemRemove then
-				TriggerClientEvent('esx:showNotification', _source, '~r~You have no more bills to cash.')
+				TriggerClientEvent('esx:showNotification', _source, _U('sell_nomorebills'))
 				PlayersVente[_source] = false
 			else
 				local amount = Config.Zones.Vente.ItemRemove
 				local item = Config.Zones.Vente.ItemRequires
+
 				Citizen.Wait(1500)
 				xPlayer.removeInventoryItem(item, amount)
 				xPlayer.addMoney(Config.Zones.Vente.ItemPrice)
-				TriggerClientEvent('esx:showNotification', _source, 'You have earned ~g~$' .. Config.Zones.Vente.ItemPrice)
+				TriggerClientEvent('esx:showNotification', _source, _U('sell_earned', ESX.Math.GroupDigits(Config.Zones.Vente.ItemPrice)))
 				Vente(_source)
 			end
 
@@ -50,24 +50,22 @@ local function Vente(source)
 	end)
 end
 
-RegisterServerEvent('esx_treasurehunter:startVente')
-AddEventHandler('esx_treasurehunter:startVente', function()
-
+RegisterServerEvent('esx_oceansalvage:startVente')
+AddEventHandler('esx_oceansalvage:startVente', function()
 	local _source = source
 
 	if PlayersVente[_source] == false then
-		TriggerClientEvent('esx:showNotification', _source, '~r~No bills to cash!')
+		TriggerClientEvent('esx:showNotification', _source, _U('sell_nobills'))
 		PlayersVente[_source] = false
 	else
 		PlayersVente[_source] = true
-		TriggerClientEvent('esx:showNotification', _source, '~g~Cashing ~w~bills...')
+		TriggerClientEvent('esx:showNotification', _source, _U('sell_cashing'))
 		Vente(_source)
 	end
 end)
 
-RegisterServerEvent('esx_treasurehunter:stopVente')
-AddEventHandler('esx_treasurehunter:stopVente', function()
-
+RegisterServerEvent('esx_oceansalvage:stopVente')
+AddEventHandler('esx_oceansalvage:stopVente', function()
 	local _source = source
 
 	if PlayersVente[_source] == true then
