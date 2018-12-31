@@ -1,5 +1,5 @@
 ESX = nil
-local PlayersVente = {}
+local PlayersSelling = {}
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
@@ -8,69 +8,69 @@ AddEventHandler('esx_oceansalvage:GiveItem', function()
 	local _source = source
 	local xPlayer = ESX.GetPlayerFromId(_source)
 
-	local Quantity = xPlayer.getInventoryItem(Config.Zones.Vente.ItemRequires).count
+	local Quantity = xPlayer.getInventoryItem(Config.Zones.Sell.ItemRequires).count
 
 	if Quantity >= 15 then
 		TriggerClientEvent('esx:showNotification', _source, _U('stop_npc'))
 	else
-		local amount = Config.Zones.Vente.ItemAdd
-		local item = Config.Zones.Vente.ItemDb_name
+		local amount = Config.Zones.Sell.ItemAdd
+		local item = Config.Zones.Sell.ItemDb_name
 		xPlayer.addInventoryItem(item, amount)
 		TriggerClientEvent('esx:showNotification', _source, _U('salvage_collected'))
 	end
 
 end)
 
-local function Vente(source)
+local function Sell(source)
 
-	SetTimeout(Config.Zones.Vente.ItemTime, function()
+	SetTimeout(Config.Zones.Sell.ItemTime, function()
 
-		if PlayersVente[source] == true then
+		if PlayersSelling[source] == true then
 
 			local _source = source
 			local xPlayer = ESX.GetPlayerFromId(_source)
 
-			local Quantity = xPlayer.getInventoryItem(Config.Zones.Vente.ItemRequires).count
+			local Quantity = xPlayer.getInventoryItem(Config.Zones.Sell.ItemRequires).count
 
-			if Quantity < Config.Zones.Vente.ItemRemove then
+			if Quantity < Config.Zones.Sell.ItemRemove then
 				TriggerClientEvent('esx:showNotification', _source, _U('sell_nomorebills'))
-				PlayersVente[_source] = false
+				PlayersSelling[_source] = false
 			else
-				local amount = Config.Zones.Vente.ItemRemove
-				local item = Config.Zones.Vente.ItemRequires
+				local amount = Config.Zones.Sell.ItemRemove
+				local item = Config.Zones.Sell.ItemRequires
 
 				Citizen.Wait(1500)
 				xPlayer.removeInventoryItem(item, amount)
-				xPlayer.addMoney(Config.Zones.Vente.ItemPrice)
-				TriggerClientEvent('esx:showNotification', _source, _U('sell_earned', ESX.Math.GroupDigits(Config.Zones.Vente.ItemPrice)))
-				Vente(_source)
+				xPlayer.addMoney(Config.Zones.Sell.ItemPrice)
+				TriggerClientEvent('esx:showNotification', _source, _U('sell_earned', ESX.Math.GroupDigits(Config.Zones.Sell.ItemPrice)))
+				Sell(_source)
 			end
 
 		end
 	end)
 end
 
-RegisterServerEvent('esx_oceansalvage:startVente')
-AddEventHandler('esx_oceansalvage:startVente', function()
+RegisterServerEvent('esx_oceansalvage:startSell')
+AddEventHandler('esx_oceansalvage:startSell', function()
 	local _source = source
 
-	if PlayersVente[_source] == false then
+	if PlayersSelling[_source] == false then
 		TriggerClientEvent('esx:showNotification', _source, _U('sell_nobills'))
-		PlayersVente[_source] = false
+		PlayersSelling[_source] = false
 	else
-		PlayersVente[_source] = true
+		PlayersSelling[_source] = true
 		TriggerClientEvent('esx:showNotification', _source, _U('sell_cashing'))
-		Vente(_source)
+		Sell(_source)
 	end
 end)
 
-RegisterServerEvent('esx_oceansalvage:stopVente')
-AddEventHandler('esx_oceansalvage:stopVente', function()
+RegisterServerEvent('esx_oceansalvage:stopSell')
+AddEventHandler('esx_oceansalvage:stopSell', function()
 	local _source = source
 
-	if PlayersVente[_source] == true then
-		PlayersVente[_source] = false
+	if PlayersSelling[_source] == true then
+		PlayersSelling[_source] = false
 	else
-		PlayersVente[_source] = true
+		PlayersSelling[_source] = true
 	end
 end)

@@ -91,7 +91,7 @@ end
 
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(10)
+		Citizen.Wait(0)
 
 		if NPCTargetPool ~= nil then
 
@@ -112,6 +112,8 @@ Citizen.CreateThread(function()
 					Done = false
 				end
 			end
+		else
+			Citizen.Wait(500)
 		end
 	end
 end)
@@ -231,16 +233,16 @@ AddEventHandler('esx_oceansalvage:hasEnteredMarker', function(zone)
 			end
 		end
 
-	elseif zone == 'Vente' then
-		CurrentAction     = 'vente'
-		CurrentActionMsg  = Config.Zones.Vente.hint
+	elseif zone == 'Sell' then
+		CurrentAction     = 'Sell'
+		CurrentActionMsg  = Config.Zones.Sell.hint
 		CurrentActionData = {}
 	end
 end)
 
 AddEventHandler('esx_oceansalvage:hasExitedMarker', function(zone)
-	if zone == 'Vente' then
-		TriggerServerEvent('esx_oceansalvage:stopVente')
+	if zone == 'Sell' then
+		TriggerServerEvent('esx_oceansalvage:stopSell')
 	end
 
 	CurrentAction = nil
@@ -281,14 +283,14 @@ function CreateBlip()
 		AddTextComponentString(Config.Zones.VehicleSpawner.BlipName)
 		EndTextCommandSetBlipName(BlipVehicle)
 
-		BlipVente = AddBlipForCoord(Config.Zones.Vente.Pos.x, Config.Zones.Vente.Pos.y, Config.Zones.Vente.Pos.z)
-		SetBlipSprite(BlipVente, Config.Zones.Vente.BlipSprite)
-		SetBlipColour(BlipVente, Config.Zones.Vente.BlipColor)
-		SetBlipAsShortRange(BlipVente, true)
+		BlipSell = AddBlipForCoord(Config.Zones.Sell.Pos.x, Config.Zones.Sell.Pos.y, Config.Zones.Sell.Pos.z)
+		SetBlipSprite(BlipSell, Config.Zones.Sell.BlipSprite)
+		SetBlipColour(BlipSell, Config.Zones.Sell.BlipColor)
+		SetBlipAsShortRange(BlipSell, true)
 
 		BeginTextCommandSetBlipName("STRING")
-		AddTextComponentString(Config.Zones.Vente.BlipName)
-		EndTextCommandSetBlipName(BlipVente)
+		AddTextComponentString(Config.Zones.Sell.BlipName)
+		EndTextCommandSetBlipName(BlipSell)
 
 		BlipVehicleDeleter = AddBlipForCoord(Config.Zones.VehicleDeleter.Pos.x, Config.Zones.VehicleDeleter.Pos.y, Config.Zones.VehicleDeleter.Pos.z)
 		SetBlipSprite(BlipVehicleDeleter, Config.Zones.VehicleDeleter.BlipSprite)
@@ -305,9 +307,9 @@ function CreateBlip()
 			BlipVehicle = nil
 		end
 
-		if BlipVente ~= nil then
-			RemoveBlip(BlipVente)
-			BlipVente = nil
+		if BlipSell ~= nil then
+			RemoveBlip(BlipSell)
+			BlipSell = nil
 		end
 
 		if BlipVehicleDeleter ~= nil then
@@ -392,7 +394,7 @@ end)
 -- Action après la demande d'accés
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(10)
+		Citizen.Wait(0)
 		if CurrentAction ~= nil then
 			ESX.ShowHelpNotification(CurrentActionMsg)
 
@@ -416,9 +418,9 @@ Citizen.CreateThread(function()
 							VehicleMenu()
 						end
 
-					elseif CurrentAction == 'vente' then
+					elseif CurrentAction == 'Sell' then
 
-						TriggerServerEvent('esx_oceansalvage:startVente')
+						TriggerServerEvent('esx_oceansalvage:startSell')
 						TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_CLIPBOARD", 0, 1)
 
 					elseif CurrentAction == 'delete_vehicle' then
@@ -450,13 +452,15 @@ Citizen.CreateThread(function()
 					CurrentAction = nil
 				end
 			end
+		else
+			Citizen.Wait(500)
 		end
 	end
 end)
 
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(10)
+		Citizen.Wait(0)
 
 		if IsControlJustReleased(1, Keys["F10"]) and ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name == Config.JobName then
 

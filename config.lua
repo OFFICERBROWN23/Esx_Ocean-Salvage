@@ -1,8 +1,8 @@
 Config              = {}
 Config.DrawDistance = 100.0
 
-Config.JobName      = "salvage"
-Config.PlatePrefix  = "OCEANMAN"
+Config.JobName      = 'salvage'
+Config.PlatePrefix  = 'OCEAN'
 
 Config.Locale       = 'en'
 
@@ -10,9 +10,9 @@ Config.Vehicles = {
 	Truck = {
 		Spawner = 1,
 		Label = 'dinghy',
-		Hash = "dinghy",
+		Hash = 'dinghy',
 		Livery = 0,
-		Trailer = "none"
+		Trailer = 'none'
 	}
 }
 
@@ -54,7 +54,7 @@ Config.Zones = {
 		hint = _U('prompt_vehicledeleter')
 	},
 
-	Vente = {
+	Sell = {
 		Pos   = {x = -1597.54, y = 5205.98, z = 3.31},
 		Size  = {x = 5.0, y = 5.0, z = 0.3},
 		Color = {r = 11, g = 203, b = 159},
@@ -64,15 +64,10 @@ Config.Zones = {
 		hint = _U('prompt_cashout'),
 
 		ItemTime = 500,
-		ItemDb_name = "contrat",
-		ItemName = "Facture",
-		ItemMax = 25,
+		ItemDb_name = 'salvage',
 		ItemAdd = 5,
 		ItemRemove = 1,
-		ItemRequires = "contrat",
-		ItemRequires_name = "Facture",
-		ItemDrop = 100,
-		ItemPrice  = 800
+		ItemRequires = 'salvage'
 	}
 
 }
